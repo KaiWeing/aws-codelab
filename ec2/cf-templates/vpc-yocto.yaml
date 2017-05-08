@@ -24,7 +24,7 @@ Resources:
         - IpProtocol: "tcp"
           FromPort: "8080"
           ToPort: "8080"
-          CidrIp: "0.0.0.0/0"
+          CidrIp: !ImportValue {"Fn::Sub": "${VPCStackName}-VPCCidr"}
       Tags:
         - Key: Name
           Value: !Sub "${TeamName}-Yocto"
@@ -113,8 +113,6 @@ Resources:
         - Key: Name
           Value: !Sub "${TeamName}-Yocto-ELB"
 
-  ###### ELB  ######
-
   ELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
     Properties:
@@ -135,6 +133,20 @@ Resources:
         UnhealthyThreshold: "2"
         Interval: "5"
         Timeout: "2"
+
+  ###### DNS #####################
+
+  DNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Comment: "DNS name"
+      HostedZoneId: !ImportValue {"Fn::Sub": "${VPCStackName}-HostedZoneId"}
+      Name: !Join [ "", [ "yocto.", !ImportValue {"Fn::Sub": "${VPCStackName}-HostedZoneName"} ] ]
+      Type: "A"
+      AliasTarget:
+        HostedZoneId: !GetAtt ELB.CanonicalHostedZoneNameID
+        DNSName: !GetAtt ELB.DNSName
+
 
   ###### auto scaling group ######
 

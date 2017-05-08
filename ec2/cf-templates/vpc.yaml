@@ -35,6 +35,11 @@ Resources:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
 
+  Route53HostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Sub "${TeamName}.${DnsRootDomain}"
+
   RouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -95,6 +100,10 @@ Outputs:
         Name: !Sub "${AWS::StackName}-VPCCidr"
       Value: !Ref VpcCidr
 
+  HostedZoneId:
+    Export:
+      Name: !Sub "${AWS::StackName}-HostedZoneId"
+    Value: !Ref Route53HostedZone
   HostedZoneName:
     Export:
       Name: !Sub "${AWS::StackName}-HostedZoneName"
