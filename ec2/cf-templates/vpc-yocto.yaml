@@ -113,6 +113,29 @@ Resources:
         - Key: Name
           Value: !Sub "${TeamName}-Yocto-ELB"
 
+  ###### ELB  ######
+
+  ELB:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      LoadBalancerName: !Sub "${TeamName}-Yocto-ELB"
+      Subnets:
+        - !ImportValue {"Fn::Sub": "${VPCStackName}-SubnetAz1aPublicId"}
+        - !ImportValue {"Fn::Sub": "${VPCStackName}-SubnetAz1bPublicId"}
+      SecurityGroups:
+        - !Ref SecurityGroupELB
+      CrossZone: "true"
+      Listeners:
+       - LoadBalancerPort: "80"
+         InstancePort: "8080"
+         Protocol: HTTP
+      HealthCheck:
+        Target: HTTP:8080/status
+        HealthyThreshold: "2"
+        UnhealthyThreshold: "2"
+        Interval: "5"
+        Timeout: "2"
+
   ###### auto scaling group ######
 
   AutoScalingGroup:
@@ -126,7 +149,11 @@ Resources:
         MaxBatchSize: "1"
         PauseTime: PT1M
         WaitOnResourceSignals: "true"
+    DependsOn:
+      - ELB
     Properties:
+      LoadBalancerNames:
+      - !Sub "${TeamName}-Yocto-ELB"
       VPCZoneIdentifier:
       - !ImportValue {"Fn::Sub": "${VPCStackName}-SubnetAz1aPublicId"}
       - !ImportValue {"Fn::Sub": "${VPCStackName}-SubnetAz1bPublicId"}
@@ -140,3 +167,7 @@ Resources:
         - Key: Name
           Value: !Sub "${TeamName}-Yocto"
           PropagateAtLaunch: "true"
+        - Key: coast_item
+          Value: "codelab"
+          PropagateAtLaunch: "true"
+
